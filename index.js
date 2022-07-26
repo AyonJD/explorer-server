@@ -30,6 +30,7 @@ const run = async () => {
         const db = client.db("explorer");
         const blogCollection = db.collection("blogCollection");
         const themeCollection = db.collection("themeCollection");
+        const usersCollection = db.collection("usersCollection");
 
         // API to Run Server 
         app.get("/", async (req, res) => {
@@ -73,18 +74,21 @@ const run = async () => {
             res.send(result);
         })
 
-        // app.put("/theme/:id", async (req, res) => {
-        //     const { id } = req.params;
-        //     const theme = req.body;
-        //     const filter = { _id: ObjectId(id) };
-        //     const updateDoc = {
-        //         $set: theme
-        //     }
-        //     const option = { upsert: true };
-        //     const result = await themeCollection.updateOne(filter, updateDoc, option);
-        //     res.send(result)
+        //POST single user information into mongoDB
+        app.post("/users", async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        }
+        );
 
-        // })
+        //GET All users from mongoDB
+        app.get("/users", async (req, res) => {
+            const users = await usersCollection.find({}).toArray();
+            res.send(users);
+        }  
+        );
+
 
 
 
