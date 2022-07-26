@@ -59,7 +59,7 @@ const run = async () => {
         }
         );
 
-        // API to patch them state to mongoDB
+        // API to put theme state to mongoDB
         app.put('/theme/:id', async (req, res) => {
             const id = req.params.id;
             const theme = req.body;
@@ -86,8 +86,25 @@ const run = async () => {
         app.get("/users", async (req, res) => {
             const users = await usersCollection.find({}).toArray();
             res.send(users);
-        }  
+        }
         );
+
+        //PUT api for update an user by email
+        app.put('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            console.log(email)
+            const user = req.body
+            // console.log(user?.photoURL)
+            const filter = { email: email }
+            const options = { upsert: true }
+            const updateDoc = {
+
+                $set: user,
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc, options)
+            // const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
+            res.send(result)
+        })
 
 
 
