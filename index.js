@@ -52,6 +52,16 @@ const run = async () => {
         }
         );
 
+        //API to post a blog
+        app.post("/blogs", async (req, res) => {
+            const blog = req.body;
+            // console.log(blog);
+            const result = await blogCollection.insertOne(blog);
+            res.send(result);
+        }
+        );
+
+
         //API to get themes
         app.get("/theme", async (req, res) => {
             const theme = await themeCollection.find({}).toArray();
