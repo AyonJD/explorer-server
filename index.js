@@ -24,11 +24,12 @@ function verifyJWT(req, res, next) {
         return res.status(401).send({ message: "Unauthorized Access" });
     }
     const token = authHeader.split(" ")[1];
+    console.log(token)
     jwt.verify(token, process.env.TOKEN, (err, decoded) => {
         if (err) {
             return res.status(403).send({ message: "Forbidden access" });
         }
-        console.log("decoded", decoded);
+        // console.log("decoded", decoded);
         req.decoded = decoded;
         next();
     });
@@ -100,14 +101,6 @@ const run = async () => {
             res.send(result);
         })
 
-        //POST single user information into mongoDB
-        app.post("/users", async (req, res) => {
-            const user = req.body;
-            const result = await usersCollection.insertOne(user);
-            res.send(result);
-        }
-        );
-
         //GET All users from mongoDB
         app.get("/users", async (req, res) => {
             const users = await usersCollection.find({}).toArray();
@@ -128,8 +121,8 @@ const run = async () => {
                 $set: user,
             };
             const result = await usersCollection.updateOne(filter, updateDoc, options)
-            // const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
-            res.send(result)
+            const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
+            res.send({ result, getToken })
         })
 
 
