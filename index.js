@@ -56,9 +56,18 @@ const run = async () => {
             res.send("Server is Running");
         });
 
-        // API to Get All Blogs
+        // API to Get All Blogs + pagination
         app.get("/blogs", async (req, res) => {
-            const blogs = await blogCollection.find({}).toArray();
+            const page = parseInt(req.query.page);
+            const count = parseInt(req.query.count);
+            // console.log(page, count);
+            const cursor = blogCollection.find({});
+            let blogs;
+            if (page || count) {
+                blogs = await cursor.skip(page * count).limit(count).toArray();
+            } else {
+                blogs = await cursor.toArray();
+            }
             res.send(blogs);
         }
         );
@@ -121,6 +130,15 @@ const run = async () => {
         }
         );
 
+        //Pagination
+        //Get blogs count
+        app.get("/blogs-count", async (req, res) => {
+            const query = {};
+            const cursor = await blogCollection.find(query).count();
+            res.send({ cursor });
+        }
+        );
+
         //PUT api for update an user by email
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -137,7 +155,6 @@ const run = async () => {
             const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
             res.send({ result, getToken })
         })
-
 
 
 
