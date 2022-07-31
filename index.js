@@ -80,6 +80,17 @@ const run = async () => {
         }
         );
 
+        //API to update a blog
+        app.put("/blogs/:id", async (req, res) => {
+            const id = req.params.id;
+            const blog = req.body;
+            // console.log(blog, "blog");
+            const result = await blogCollection.updateOne({ _id: ObjectId(id) }, { $set: blog });
+            // console.log(result)
+            res.send(result);
+        }
+        );
+
 
         //API to get themes
         app.get("/theme", async (req, res) => {
