@@ -56,6 +56,15 @@ const run = async () => {
             res.send("Server is Running");
         });
 
+        //Pagination
+        //Get blogs count
+        app.get("/blogs-count", async (req, res) => {
+            const query = {};
+            const count = await blogCollection.find(query).count();
+            res.send({ count });
+        }
+        );
+
         // API to Get All Blogs + pagination
         app.get("/blogs", async (req, res) => {
             const page = parseInt(req.query.page);
@@ -130,14 +139,6 @@ const run = async () => {
         }
         );
 
-        //Pagination
-        //Get blogs count
-        app.get("/blogs-count", async (req, res) => {
-            const query = {};
-            const cursor = await blogCollection.find(query).count();
-            res.send({ cursor });
-        }
-        );
 
         //PUT api for update an user by email
         app.put('/users/:email', async (req, res) => {
