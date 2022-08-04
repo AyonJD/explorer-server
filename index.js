@@ -124,10 +124,6 @@ const run = async () => {
             const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
             res.send({ result, getToken })
         })
-
-
-
-
     }
     finally {
         // client.close(); 
