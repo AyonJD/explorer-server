@@ -50,6 +50,8 @@ const run = async () => {
         const blogCollection = db.collection("blogCollection");
         const themeCollection = db.collection("themeCollection");
         const usersCollection = db.collection("usersCollection");
+        const memberrshipPlanCollection = db.collection("memberrshipPlanCollection");
+        const purchesCollection = db.collection("purchesCollection");
 
         // API to Run Server 
         app.get("/", async (req, res) => {
@@ -155,6 +157,25 @@ const run = async () => {
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
             res.send({ result, getToken })
+        })
+
+        //Stripe Payment method
+        app.post('/create-payment-intent', async (req, res) => {
+            const service = req.body
+            const price = service.price
+            const amount = price * 100
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        })
+        app.get('/payment/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const order = await purchesCollection.findOne(query)
+            res.send(order)
         })
 
 
