@@ -18,6 +18,6 @@
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^4.8.0",
     "nodemon": "^2.0.19",
-    "stripe": "^10.0.0"
+    "stripe": "^10.1.0"
   }
 }

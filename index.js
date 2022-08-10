@@ -4,6 +4,9 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// console.log(process.env.STRIPE_SECRET_KEY);
 
 
 const port = process.env.PORT || 5000;
@@ -52,6 +55,7 @@ const run = async () => {
         const usersCollection = db.collection("usersCollection");
         const memberrshipPlanCollection = db.collection("memberrshipPlanCollection");
         const purchesCollection = db.collection("purchesCollection");
+        // const purchesCollection = db.collection("purchesCollection");
 
         // API to Run Server 
         app.get("/", async (req, res) => {
@@ -71,7 +75,6 @@ const run = async () => {
         app.get("/blogs", async (req, res) => {
             const page = parseInt(req.query.page);
             const count = parseInt(req.query.count);
-            // console.log(page, count);
             const cursor = blogCollection.find({});
             let blogs;
             if (page || count) {
@@ -161,23 +164,77 @@ const run = async () => {
 
         //Stripe Payment method
         app.post('/create-payment-intent', async (req, res) => {
-            const service = req.body
+            const service = await req.body;
             const price = service.price
             const amount = price * 100
-            const paymentIntent = await stripe.paymentIntents.create({
-                amount: amount,
-                currency: 'usd',
-                payment_method_types: ['card']
-            });
-            res.send({ clientSecret: paymentIntent.client_secret })
-        })
-        app.get('/payment/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id
-            const query = { _id: ObjectId(id) }
-            const order = await purchesCollection.findOne(query)
-            res.send(order)
+            if (isNaN(amount) === false) {
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: amount,
+                    currency: 'usd',
+                    payment_method_types: ['card']
+                });
+                res.send({ clientSecret: paymentIntent.client_secret })
+            }
         })
 
+        // app.get('/payment/:id', verifyJWT, async (req, res) => {
+        //     const id = req.params.id
+        //     const query = { _id: ObjectId(id) }
+        //     const order = await purchesCollection.findOne(query)
+        //     res.send(order)
+        // })
+
+        //Get all membership plans
+        app.get("/membership-plans", async (req, res) => {
+            const plans = await memberrshipPlanCollection.find({}).toArray();
+            res.send(plans);
+        }
+        );
+
+        //Get membership plan by id
+        app.get("/membership-plans/:id", async (req, res) => {
+            const id = req.params.id;
+            const plan = await memberrshipPlanCollection.findOne({ _id: ObjectId(id) });
+            res.send(plan);
+        })
+
+
+        app.put('/ship/:id', async (req, res) => {
+
+            const id = req.params.id;
+
+            const order = req.body;
+
+            const options = { upsert: true }
+            const filter = { _id: ObjectId(id) }
+            //  console.log(filter,"filter email");
+            const updateDoc = {
+                $set: {
+                    isDeliverd: true
+                }
+
+            };
+            const result = await purchesCollection.updateOne(filter, updateDoc, options)
+
+            res.send(result)
+
+        })
+
+        app.patch('/orderPay/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id
+            const payment = req.body
+            const filter = { _id: ObjectId(id) }
+            const updateDoc = {
+
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                },
+            };
+            const updateOrder = await purchesCollection.updateOne(filter, updateDoc)
+            const result = await paymentCollection.insertOne(payment)
+            res.send(updateOrder)
+        })
 
 
     }
