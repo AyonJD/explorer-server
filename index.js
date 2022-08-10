@@ -29,7 +29,6 @@ function verifyJWT(req, res, next) {
         return res.status(401).send({ message: "Unauthorized Access" });
     }
     const token = authHeader.split(" ")[1];
-    console.log(token)
     jwt.verify(token, process.env.TOKEN, (err, decoded) => {
         if (err) {
             return res.status(403).send({ message: "Forbidden access" });
@@ -148,7 +147,6 @@ const run = async () => {
         //PUT api for update an user by email
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
-            console.log(email)
             const user = req.body
             // console.log(user?.photoURL)
             const filter = { email: email }
@@ -222,10 +220,26 @@ const run = async () => {
 
         app.put('/orderPay', verifyJWT, async (req, res) => {
             const payment = req.body
-            console.log(payment);
             const result = await purchesCollection.insertOne(payment)
             res.send({ result })
         })
+
+        //patch for updating users membership plan
+        // app.patch('/users/:email', async (req, res) => {
+        //     const email = req.params.email;
+        //     const user = req.body
+        //     console.log(user)
+        //     // console.log(user?.photoURL)
+        //     const filter = { email: email }
+        //     const options = { upsert: true }
+        //     const updateDoc = {
+
+        //         $set: user,
+        //     };
+        //     const result = await usersCollection.updateOne(filter, updateDoc, options)
+        //     res.send(result)
+        // }
+        // )
 
         app.get('/orderPay', async (req, res) => {
             const allPurches = await purchesCollection.find({}).toArray();
