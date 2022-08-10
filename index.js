@@ -220,22 +220,28 @@ const run = async () => {
 
         })
 
-        app.patch('/orderPay/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id
+        app.patch('/orderPay', verifyJWT, async (req, res) => {
             const payment = req.body
-            const filter = { _id: ObjectId(id) }
-            const updateDoc = {
-
-                $set: {
-                    paid: true,
-                    transactionId: payment.transactionId
-                },
-            };
-            const updateOrder = await purchesCollection.updateOne(filter, updateDoc)
-            const result = await paymentCollection.insertOne(payment)
-            res.send(updateOrder)
+            console.log(payment);
+            const result = await purchesCollection.insertOne(payment)
+            res.send({ result })
         })
 
+        app.get('/orderPay', async (req, res) => {
+            const allPurches = await purchesCollection.find({}).toArray();
+            res.send(allPurches);
+        })
+
+        app.get('/orderPay/:insertedId', async (req, res) => {
+            const insertedId = req.params.insertedId;
+            if (insertedId.length !== 24) {
+                res.send({ error: 'Invalid id' })
+            } else {
+                const query = { _id: ObjectId(insertedId) }
+                const order = await purchesCollection.findOne(query)
+                res.send(order)
+            }
+        })
 
     }
     finally {
