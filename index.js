@@ -220,7 +220,7 @@ const run = async () => {
 
         })
 
-        app.patch('/orderPay', verifyJWT, async (req, res) => {
+        app.put('/orderPay', verifyJWT, async (req, res) => {
             const payment = req.body
             console.log(payment);
             const result = await purchesCollection.insertOne(payment)
