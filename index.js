@@ -143,6 +143,22 @@ const run = async () => {
         }
         );
 
+        //Update user by Id
+        app.put("/users/:id", async (req, res) => {
+            const id = req.params.id;
+            const user = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+
+            const result = await usersCollection.updateOne(filter, updateDoc, options)
+            // console.log(result)
+            res.send(result);
+        }
+        );
+
 
         //PUT api for update an user by email
         app.put('/users/:email', async (req, res) => {
