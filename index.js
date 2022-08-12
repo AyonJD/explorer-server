@@ -4,9 +4,14 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// console.log(process.env.STRIPE_SECRET_KEY);
+
+
+const port = process.env.PORT || 5000;
 const app = express();
-const port = process.env.PORT || 5000
+
 // app.use(cors());
 const corsFonfig = {
     origin: true,
@@ -25,7 +30,7 @@ function verifyJWT(req, res, next) {
     }
     const token = authHeader.split(" ")[1];
     console.log(token)
-    jwt.verify(token, process.env.TOKEN,  (err, decoded) => {
+    jwt.verify(token, process.env.TOKEN, (err, decoded) => {
         if (err) {
             return res.status(403).send({ message: "Forbidden access" });
         }
@@ -48,15 +53,35 @@ const run = async () => {
         const blogCollection = db.collection("blogCollection");
         const themeCollection = db.collection("themeCollection");
         const usersCollection = db.collection("usersCollection");
+        const memberrshipPlanCollection = db.collection("memberrshipPlanCollection");
+        const purchesCollection = db.collection("purchesCollection");
+        // const purchesCollection = db.collection("purchesCollection");
 
         // API to Run Server 
         app.get("/", async (req, res) => {
             res.send("Server is Running");
         });
 
-        // API to Get All Blogs
+        //Pagination
+        //Get blogs count
+        app.get("/blogs-count", async (req, res) => {
+            const query = {};
+            const count = await blogCollection.find(query).count();
+            res.send({ count });
+        }
+        );
+
+        // API to Get All Blogs + pagination
         app.get("/blogs", async (req, res) => {
-            const blogs = await blogCollection.find({}).toArray();
+            const page = parseInt(req.query.page);
+            const count = parseInt(req.query.count);
+            const cursor = blogCollection.find({});
+            let blogs;
+            if (page || count) {
+                blogs = await cursor.skip(page * count).limit(count).toArray();
+            } else {
+                blogs = await cursor.toArray();
+            }
             res.send(blogs);
         }
         );
@@ -74,6 +99,17 @@ const run = async () => {
             const blog = req.body;
             // console.log(blog);
             const result = await blogCollection.insertOne(blog);
+            res.send(result);
+        }
+        );
+
+        //API to update a blog
+        app.put("/blogs/:id", async (req, res) => {
+            const id = req.params.id;
+            const blog = req.body;
+            // console.log(blog, "blog");
+            const result = await blogCollection.updateOne({ _id: ObjectId(id) }, { $set: blog });
+            // console.log(result)
             res.send(result);
         }
         );
@@ -108,6 +144,7 @@ const run = async () => {
         }
         );
 
+
         //PUT api for update an user by email
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -124,6 +161,88 @@ const run = async () => {
             const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
             res.send({ result, getToken })
         })
+
+        //Stripe Payment method
+        app.post('/create-payment-intent', async (req, res) => {
+            const service = await req.body;
+            const price = service.price
+            const amount = price * 100
+            if (isNaN(amount) === false) {
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount: amount,
+                    currency: 'usd',
+                    payment_method_types: ['card']
+                });
+                res.send({ clientSecret: paymentIntent.client_secret })
+            }
+        })
+
+        // app.get('/payment/:id', verifyJWT, async (req, res) => {
+        //     const id = req.params.id
+        //     const query = { _id: ObjectId(id) }
+        //     const order = await purchesCollection.findOne(query)
+        //     res.send(order)
+        // })
+
+        //Get all membership plans
+        app.get("/membership-plans", async (req, res) => {
+            const plans = await memberrshipPlanCollection.find({}).toArray();
+            res.send(plans);
+        }
+        );
+
+        //Get membership plan by id
+        app.get("/membership-plans/:id", async (req, res) => {
+            const id = req.params.id;
+            const plan = await memberrshipPlanCollection.findOne({ _id: ObjectId(id) });
+            res.send(plan);
+        })
+
+
+        app.put('/ship/:id', async (req, res) => {
+
+            const id = req.params.id;
+
+            const order = req.body;
+
+            const options = { upsert: true }
+            const filter = { _id: ObjectId(id) }
+            //  console.log(filter,"filter email");
+            const updateDoc = {
+                $set: {
+                    isDeliverd: true
+                }
+
+            };
+            const result = await purchesCollection.updateOne(filter, updateDoc, options)
+
+            res.send(result)
+
+        })
+
+        app.patch('/orderPay', verifyJWT, async (req, res) => {
+            const payment = req.body
+            console.log(payment);
+            const result = await purchesCollection.insertOne(payment)
+            res.send({ result })
+        })
+
+        app.get('/orderPay', async (req, res) => {
+            const allPurches = await purchesCollection.find({}).toArray();
+            res.send(allPurches);
+        })
+
+        app.get('/orderPay/:insertedId', async (req, res) => {
+            const insertedId = req.params.insertedId;
+            if (insertedId.length !== 24) {
+                res.send({ error: 'Invalid id' })
+            } else {
+                const query = { _id: ObjectId(insertedId) }
+                const order = await purchesCollection.findOne(query)
+                res.send(order)
+            }
+        })
+
     }
     finally {
         // client.close(); 
