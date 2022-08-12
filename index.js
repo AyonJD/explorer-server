@@ -144,15 +144,15 @@ const run = async () => {
         );
 
         //Update user by Id
-        app.put("/users/:id", async (req, res) => {
-            const id = req.params.id;
+        app.put("/users/:email", async (req, res) => {
+            const email = req.params.email;
+            // console.log(id);
             const user = req.body;
-            const filter = { _id: ObjectId(id) };
+            const filter = {email: email};
             const options = { upsert: true };
             const updateDoc = {
                 $set: user
             };
-
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             // console.log(result)
             res.send(result);
