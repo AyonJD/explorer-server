@@ -185,6 +185,12 @@ const run = async () => {
         }
         );
 
+        //GET All the Purched use from mongoDB
+        app.get("/purches", async (req, res) => {
+            const purches = await purchesCollection.find({}).toArray();
+            res.send(purches);
+        })
+
         //Stripe Payment method
         app.post('/create-payment-intent', async (req, res) => {
             const service = await req.body;
