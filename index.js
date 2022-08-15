@@ -144,26 +144,27 @@ const run = async () => {
         );
 
         //Update user by Id
-        app.put("/users/:email", async (req, res) => {
-            const email = req.params.email;
-            const user = req.body;
-            const filter = { email: email };
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: user
-            };
+        // app.put("/users/:email", async (req, res) => {
+        //     const email = req.params.email;
+        //     const user = req.body;
+        //     const filter = { email: email };
+        //     const options = { upsert: true };
+        //     const updateDoc = {
+        //         $set: user
+        //     };
 
-            const result = await usersCollection.updateOne(filter, updateDoc, options)
-            // console.log(result)
-            res.send(result);
-        }
-        );
+        //     const result = await usersCollection.updateOne(filter, updateDoc, options)
+        //     // console.log(result)
+        //     res.send(result);
+        // }
+        // );
 
 
         //PUT api for update an user by email
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body
+            console.log(user, "user", email, "email");
             const filter = { email: email }
             const options = { upsert: true }
             const updateDoc = {
@@ -174,6 +175,15 @@ const run = async () => {
             const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
             res.send({ result, getToken })
         })
+
+        //POST api for create an user
+        app.post("/users", async (req, res) => {
+            const user = req.body;
+            console.log(user, "user");
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        }
+        );
 
         //Stripe Payment method
         app.post('/create-payment-intent', async (req, res) => {
