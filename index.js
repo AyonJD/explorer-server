@@ -142,29 +142,44 @@ const run = async () => {
             res.send(users);
         }
         );
+        // API to get user by user email 
+        app.get("/users/:email", async (req, res) => {
+            const decodeEmail = req.decoded.email;
+            const email = req.params.email;
+            if (email === decodeEmail) {
+                const query = { email: email }
+                const cursor = usersCollection.find(query);
+                const user = await cursor.toArray();
+                res.send(user);
+            }
+            else {
+                return res.status(403).send({ message: "Forbidden access" });
+            }
+        });
+
 
         //Update user by Id
-        app.put("/users/:email", async (req, res) => {
-            const email = req.params.email;
-            // console.log(id);
-            const user = req.body;
-            const filter = {email: email};
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: user
-            };
-            const result = await usersCollection.updateOne(filter, updateDoc, options)
-            // console.log(result)
-            res.send(result);
-        }
-        );
+        // app.put("/users/:email", async (req, res) => {
+        //     const email = req.params.email;
+        //     const user = req.body;
+        //     const filter = { email: email };
+        //     const options = { upsert: true };
+        //     const updateDoc = {
+        //         $set: user
+        //     };
+
+        //     const result = await usersCollection.updateOne(filter, updateDoc, options)
+        //     // console.log(result)
+        //     res.send(result);
+        // }
+        // );
 
 
         //PUT api for update an user by email
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body
-            // console.log(user?.photoURL)
+            console.log(user, "user", email, "email");
             const filter = { email: email }
             const options = { upsert: true }
             const updateDoc = {
@@ -174,6 +189,21 @@ const run = async () => {
             const result = await usersCollection.updateOne(filter, updateDoc, options)
             const getToken = jwt.sign({ email: email }, process.env.TOKEN, { expiresIn: '1d' })
             res.send({ result, getToken })
+        })
+
+        //POST api for create an user
+        app.post("/users", async (req, res) => {
+            const user = req.body;
+            console.log(user, "user");
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        }
+        );
+
+        //GET All the Purched use from mongoDB
+        app.get("/purches", async (req, res) => {
+            const purches = await purchesCollection.find({}).toArray();
+            res.send(purches);
         })
 
         //Stripe Payment method
