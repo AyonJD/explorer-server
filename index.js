@@ -113,6 +113,15 @@ const run = async () => {
         }
         );
 
+        // // API to delete a blog by masum 
+        // app.delete("/blogs/:id", async (req, res) => {
+        //     const id = req.params.id;
+        //     const result = await blogCollection.deleteOne({ _id: ObjectId(id) });
+        //     res.send(result);
+        // }
+        // );
+
+
 
         //API to get themes
         app.get("/theme", async (req, res) => {
